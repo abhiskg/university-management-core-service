@@ -1,0 +1,4 @@
+logs
+.vscode
+.husky
+node_modules
