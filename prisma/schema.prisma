@@ -11,14 +11,85 @@ datasource db {
 }
 
 model AcademicSemester {
-  id         String   @id @default(uuid())
-  year       String   @db.VarChar(50)
-  title      String   @db.VarChar(50)
-  code       String   @db.VarChar(50)
-  startMonth String   @db.VarChar(50)
-  endMonth   String   @db.VarChar(50)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(uuid())
+  year       Int
+  title      String    @db.VarChar(50)
+  code       String    @db.VarChar(50)
+  startMonth String    @db.VarChar(50)
+  endMonth   String    @db.VarChar(50)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  students   Student[]
 
   @@map("academic_semesters")
+}
+
+model AcademicFaculty {
+  id                  String               @id @default(uuid())
+  title               String               @db.VarChar(50)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  academicDepartments AcademicDepartment[]
+  students            Student[]
+  faculties           Faculty[]
+
+  @@map("academic_faculties")
+}
+
+model AcademicDepartment {
+  id                String          @id @default(uuid())
+  title             String          @db.VarChar(255)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  academicFacultyId String
+  academicFaculty   AcademicFaculty @relation(fields: [academicFacultyId], references: [id])
+  students          Student[]
+  faculties         Faculty[]
+
+  @@map("academic_departments")
+}
+
+model Student {
+  id                   String             @id @default(uuid())
+  studentId            String             @db.VarChar(255)
+  firstName            String             @db.VarChar(255)
+  lastName             String             @db.VarChar(255)
+  middleName           String             @db.VarChar(255)
+  profileImage         String             @db.VarChar(255)
+  email                String             @db.VarChar(59)
+  contactNo            String             @db.VarChar(59)
+  gender               String             @db.VarChar(255)
+  bloodGroup           String             @db.VarChar(255)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  academicSemesterId   String
+  academicSemester     AcademicSemester   @relation(fields: [academicSemesterId], references: [id])
+  academicDepartmentId String
+  academicDepartment   AcademicDepartment @relation(fields: [academicDepartmentId], references: [id])
+  academicFacultyId    String
+  academicFaculty      AcademicFaculty    @relation(fields: [academicFacultyId], references: [id])
+
+  @@map("students")
+}
+
+model Faculty {
+  id                   String             @id @default(uuid())
+  facultyId            String             @db.VarChar(255)
+  firstName            String             @db.VarChar(255)
+  lastName             String             @db.VarChar(255)
+  middleName           String             @db.VarChar(255)
+  profileImage         String             @db.VarChar(255)
+  email                String             @db.VarChar(59)
+  contactNo            String             @db.VarChar(59)
+  gender               String             @db.VarChar(255)
+  bloodGroup           String             @db.VarChar(255)
+  designation          String             @db.VarChar(255)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  academicDepartmentId String
+  academicDepartment   AcademicDepartment @relation(fields: [academicDepartmentId], references: [id])
+  academicFacultyId    String
+  academicFaculty      AcademicFaculty    @relation(fields: [academicFacultyId], references: [id])
+
+  @@map("faculties")
 }

@@ -15,7 +15,7 @@ process.on("uncaughtException", (error) => {
   try {
     // connection here
 
-    logger.info("Database is connected Successfully");
+    // logger.info("Database is connected Successfully");
 
     server = app.listen(config.port, () => {
       logger.info(`Application listing on port ${config.port}`);
