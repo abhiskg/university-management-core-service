@@ -2,8 +2,11 @@ import type { Server } from "http";
 import app from "./app";
 import config from "./config";
 import { errorLogger, logger } from "./shared/logger";
+import { PrismaClient } from "@prisma/client";
 
 let server: Server;
+
+export const prisma = new PrismaClient();
 
 // uncaught exception error
 process.on("uncaughtException", (error) => {

@@ -1,4 +1,3 @@
-import type { SortOrder } from "mongoose";
 import type { IPaginationOptions } from "../interfaces/pagination.interface";
 
 const calculatePagination = (
@@ -12,7 +11,7 @@ const calculatePagination = (
   const sortBy = options.sortBy || defaultOptions.sortBy;
   const sortOrder = options.sortOrder || defaultOptions.sortOrder;
 
-  const sortCondition: { [key: string]: SortOrder } = {};
+  const sortCondition: { [key: string]: string } = {};
 
   if (sortBy && sortOrder) {
     sortCondition[sortBy] = sortOrder;
