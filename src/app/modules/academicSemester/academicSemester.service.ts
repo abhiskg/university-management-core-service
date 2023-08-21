@@ -5,12 +5,12 @@ import { prisma } from "../../../server";
 import { academicSemesterSearchableFields } from "./academicSemester.constant";
 import type { IAcademicSemesterFilters } from "./academicSemester.interface";
 
-const insertToDb = async (data: AcademicSemester) => {
+const insertToDB = async (data: AcademicSemester) => {
   const result = await prisma.academicSemester.create({ data });
   return result;
 };
 
-const getAllFromDb = async (
+const getAllFromDB = async (
   filters: IAcademicSemesterFilters,
   paginationOptions: IPaginationOptions
 ) => {
@@ -23,7 +23,6 @@ const getAllFromDb = async (
     });
 
   const { search, ...filtersData } = filters;
-
   const andConditions = [];
 
   if (search) {
@@ -39,11 +38,20 @@ const getAllFromDb = async (
 
   if (Object.keys(filtersData).length > 0) {
     andConditions.push({
-      AND: Object.entries(filtersData).map(([field, value]) => ({
-        [field]: {
-          equals: value,
-        },
-      })),
+      AND: Object.entries(filtersData).map(([field, value]) => {
+        if (field === "year") {
+          return {
+            [field]: {
+              equals: parseInt(value),
+            },
+          };
+        }
+        return {
+          [field]: {
+            equals: value,
+          },
+        };
+      }),
     });
   }
 
@@ -55,9 +63,6 @@ const getAllFromDb = async (
     skip,
     take: limit,
     orderBy: sortCondition,
-    include: {
-      students: true,
-    },
   });
   const total = await prisma.academicSemester.count();
   return {
@@ -70,7 +75,38 @@ const getAllFromDb = async (
   };
 };
 
+const getByIdFromDB = async (id: string) => {
+  const result = await prisma.academicSemester.findUnique({
+    where: {
+      id,
+    },
+  });
+  return result;
+};
+
+const updateIntoDB = async (id: string, payload: Partial<AcademicSemester>) => {
+  const result = await prisma.academicSemester.update({
+    where: {
+      id,
+    },
+    data: payload,
+  });
+  return result;
+};
+
+const deleteFromDB = async (id: string) => {
+  const result = await prisma.academicSemester.delete({
+    where: {
+      id,
+    },
+  });
+  return result;
+};
+
 export const AcademicSemesterService = {
-  insertToDb,
-  getAllFromDb,
+  insertToDB,
+  getAllFromDB,
+  getByIdFromDB,
+  updateIntoDB,
+  deleteFromDB,
 };

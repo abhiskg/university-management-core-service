@@ -5,7 +5,7 @@ import config from "../../config";
 import ApiError from "../../errors/ApiError";
 import handleCastError from "../../errors/handleCastError";
 import handleDuplicateKeyError from "../../errors/handleDuplicateKeyError";
-import handleValidationError from "../../errors/handleValidationError";
+import handleUnknownRecordError from "../../errors/handleUnknownRecordError";
 import handleZodError from "../../errors/handleZodError";
 import type { IGenericErrorMessage } from "../../interfaces/error.interface";
 import { errorLogger } from "../../shared/logger";
@@ -25,8 +25,8 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorMessages = simplifiedError.errorMessages;
-  } else if (error?.name === "ValidationError") {
-    const simplifiedError = handleValidationError(error);
+  } else if (error?.code === "P2025") {
+    const simplifiedError = handleUnknownRecordError(error);
 
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
@@ -55,7 +55,7 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
         ]
       : [];
   } else if (error instanceof Error) {
-    message = error.message;
+    message;
     errorMessages = error.message
       ? [
           {
