@@ -1,11 +1,19 @@
 import type { AcademicSemester, Prisma } from "@prisma/client";
+import ApiError from "../../../errors/ApiError";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
 import type { IPaginationOptions } from "../../../interfaces/pagination.interface";
 import { prisma } from "../../../server";
-import { academicSemesterSearchableFields } from "./academicSemester.constant";
+import {
+  academicSemesterSearchableFields,
+  academicSemesterTitleCodeMapper,
+} from "./academicSemester.constant";
 import type { IAcademicSemesterFilters } from "./academicSemester.interface";
 
 const insertToDB = async (data: AcademicSemester) => {
+  if (academicSemesterTitleCodeMapper[data.title] !== data.code) {
+    throw new ApiError(400, "Invalid Semester Code");
+  }
+
   const result = await prisma.academicSemester.create({ data });
   return result;
 };
@@ -85,6 +93,14 @@ const getByIdFromDB = async (id: string) => {
 };
 
 const updateIntoDB = async (id: string, payload: Partial<AcademicSemester>) => {
+  if (
+    payload.title &&
+    payload.code &&
+    academicSemesterTitleCodeMapper[payload.title] !== payload.code
+  ) {
+    throw new ApiError(400, "Invalid Semester Code");
+  }
+
   const result = await prisma.academicSemester.update({
     where: {
       id,
