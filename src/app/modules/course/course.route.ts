@@ -1,22 +1,32 @@
 import express from "express";
+import { ENUM_USER_ROLE } from "../../../enums/user.enum";
+import auth from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
 import { CourseController } from "./course.controller";
 import { CourseValidation } from "./course.validation";
 
 const router = express.Router();
+router.get("/:id", CourseController.getByIdFromDB);
+router.get("/", CourseController.getAllFromDB);
 
 router.post(
   "/create-course",
   validateRequest(CourseValidation.createSchema),
+  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
   CourseController.insertToDB
 );
-router.get("/:id", CourseController.getByIdFromDB);
+
 router.patch(
   "/:id",
   validateRequest(CourseValidation.updateSchema),
+  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
   CourseController.updateIntoDB
 );
-router.delete("/:id", CourseController.deleteFromDB);
-router.get("/", CourseController.getAllFromDB);
+
+router.delete(
+  "/:id",
+  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
+  CourseController.deleteFromDB
+);
 
 export const CourseRoutes = router;
