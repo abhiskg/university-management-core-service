@@ -71,10 +71,25 @@ const deleteFromDB: RequestHandler = catchAsyncError(async (req, res) => {
   });
 });
 
+const assignFaculties: RequestHandler = catchAsyncError(async (req, res) => {
+  const courseId = req.params.id;
+  const faculties = req.body.faculties;
+
+  const result = await CourseService.assignFaculties(courseId, faculties);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Course faculty assigned successfully!",
+    data: result,
+  });
+});
+
 export const CourseController = {
   insertToDB,
   getAllFromDB,
   getByIdFromDB,
   updateIntoDB,
   deleteFromDB,
+  assignFaculties,
 };

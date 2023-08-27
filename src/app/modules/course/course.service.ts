@@ -221,10 +221,30 @@ const deleteFromDB = async (id: string) => {
   return result;
 };
 
+const assignFaculties = async (courseId: string, faculties: string[]) => {
+  await prisma.courseFaculty.createMany({
+    data: faculties.map((facultyId) => ({
+      courseId,
+      facultyId,
+    })),
+  });
+
+  const assignFacultiesData = await prisma.courseFaculty.findMany({
+    where: {
+      courseId,
+    },
+    include: {
+      faculty: true,
+    },
+  });
+  return assignFacultiesData;
+};
+
 export const CourseService = {
   insertToDB,
   getAllFromDB,
   getByIdFromDB,
   updateIntoDB,
   deleteFromDB,
+  assignFaculties,
 };
