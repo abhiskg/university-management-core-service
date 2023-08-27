@@ -3,8 +3,13 @@ import ApiError from "../../../errors/ApiError";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
 import type { IPaginationOptions } from "../../../interfaces/pagination.interface";
 import { prisma } from "../../../server";
+import { asyncForEach } from "../../../shared/utils";
 import { courseSearchableFields } from "./course.constant";
-import type { ICourseCreateData, ICourseFilters } from "./course.interface";
+import type {
+  ICourseCreateData,
+  ICourseFilters,
+  IPreRequisiteCourse,
+} from "./course.interface";
 
 const insertToDB = async (data: ICourseCreateData) => {
   const { preRequisiteCourses, ...courseData } = data;
@@ -17,14 +22,17 @@ const insertToDB = async (data: ICourseCreateData) => {
     }
 
     if (preRequisiteCourses && preRequisiteCourses.length > 0) {
-      for (let index = 0; index < preRequisiteCourses.length; index++) {
-        await tx.courseToPrerequisite.create({
-          data: {
-            courseId: result.id,
-            prerequisiteId: preRequisiteCourses[index].courseId,
-          },
-        });
-      }
+      await asyncForEach(
+        preRequisiteCourses,
+        async (preRequisiteCourse: IPreRequisiteCourse) => {
+          await tx.courseToPrerequisite.create({
+            data: {
+              courseId: result.id,
+              prerequisiteId: preRequisiteCourse.courseId,
+            },
+          });
+        }
+      );
     }
     return result;
   });
@@ -137,37 +145,46 @@ const updateIntoDB = async (
     }
 
     if (preRequisiteCourses && preRequisiteCourses.length > 0) {
-      const deletePrerequisite = preRequisiteCourses.filter(
+      const deletePrerequisites = preRequisiteCourses.filter(
         (course) => course.courseId && course.isDeleted
       );
-      const newPrerequisite = preRequisiteCourses.filter(
+      const newPrerequisites = preRequisiteCourses.filter(
         (course) => course.courseId && !course.isDeleted
       );
 
       // Delete
-      for (let i = 0; i < deletePrerequisite.length; i++) {
-        await tx.courseToPrerequisite.deleteMany({
-          where: {
-            AND: [
-              {
-                courseId: id,
+      if (deletePrerequisites.length > 0) {
+        await asyncForEach(
+          deletePrerequisites,
+          async (deletePrerequisite: IPreRequisiteCourse) => {
+            await tx.courseToPrerequisite.deleteMany({
+              where: {
+                AND: [
+                  {
+                    courseId: id,
+                  },
+                  {
+                    prerequisiteId: deletePrerequisite.courseId,
+                  },
+                ],
               },
-              {
-                prerequisiteId: deletePrerequisite[i].courseId,
-              },
-            ],
-          },
-        });
+            });
+          }
+        );
       }
-
       // Add New Prerequisite
-      for (let i = 0; i < newPrerequisite.length; i++) {
-        await tx.courseToPrerequisite.create({
-          data: {
-            courseId: id,
-            prerequisiteId: newPrerequisite[i].courseId,
-          },
-        });
+      if (newPrerequisites.length > 0) {
+        await asyncForEach(
+          newPrerequisites,
+          async (newPrerequisite: IPreRequisiteCourse) => {
+            await tx.courseToPrerequisite.create({
+              data: {
+                courseId: id,
+                prerequisiteId: newPrerequisite.courseId,
+              },
+            });
+          }
+        );
       }
     }
     return result;
