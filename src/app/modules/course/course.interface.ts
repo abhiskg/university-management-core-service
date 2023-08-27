@@ -10,5 +10,6 @@ export type ICourseCreateData = {
   credits: number;
   preRequisiteCourses: {
     courseId: string;
+    isDeleted?: boolean;
   }[];
 };

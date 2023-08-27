@@ -1,4 +1,4 @@
-import type { Course, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import ApiError from "../../../errors/ApiError";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
 import type { IPaginationOptions } from "../../../interfaces/pagination.interface";
@@ -119,14 +119,80 @@ const getByIdFromDB = async (id: string) => {
   return result;
 };
 
-const updateIntoDB = async (id: string, payload: Partial<Course>) => {
-  const result = await prisma.course.update({
-    where: {
-      id,
-    },
-    data: payload,
+const updateIntoDB = async (
+  id: string,
+  payload: Partial<ICourseCreateData>
+) => {
+  const { preRequisiteCourses, ...courseData } = payload;
+  const updateCourse = await prisma.$transaction(async (tx) => {
+    const result = await tx.course.update({
+      where: {
+        id,
+      },
+      data: courseData,
+    });
+
+    if (!result) {
+      throw new ApiError(400, "Unable to update course");
+    }
+
+    if (preRequisiteCourses && preRequisiteCourses.length > 0) {
+      const deletePrerequisite = preRequisiteCourses.filter(
+        (course) => course.courseId && course.isDeleted
+      );
+      const newPrerequisite = preRequisiteCourses.filter(
+        (course) => course.courseId && !course.isDeleted
+      );
+
+      // Delete
+      for (let i = 0; i < deletePrerequisite.length; i++) {
+        await tx.courseToPrerequisite.deleteMany({
+          where: {
+            AND: [
+              {
+                courseId: id,
+              },
+              {
+                prerequisiteId: deletePrerequisite[i].courseId,
+              },
+            ],
+          },
+        });
+      }
+
+      // Add New Prerequisite
+      for (let i = 0; i < newPrerequisite.length; i++) {
+        await tx.courseToPrerequisite.create({
+          data: {
+            courseId: id,
+            prerequisiteId: newPrerequisite[i].courseId,
+          },
+        });
+      }
+    }
+    return result;
   });
-  return result;
+
+  if (updateCourse) {
+    const responseData = await prisma.course.findUnique({
+      where: {
+        id: updateCourse.id,
+      },
+      include: {
+        preRequisite: {
+          include: {
+            prerequisite: true,
+          },
+        },
+        preRequisiteFor: {
+          include: {
+            course: true,
+          },
+        },
+      },
+    });
+    return responseData;
+  }
 };
 
 const deleteFromDB = async (id: string) => {
