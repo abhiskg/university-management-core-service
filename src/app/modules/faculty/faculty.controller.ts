@@ -4,8 +4,8 @@ import ApiError from "../../../errors/ApiError";
 import pick from "../../../shared/pick";
 import sendResponse from "../../../shared/sendResponse";
 import catchAsyncError from "../../middlewares/catchAsyncError";
-import { FacultyService } from "./faculty.service";
 import { facultyFilterableFields } from "./faculty.constant";
+import { FacultyService } from "./faculty.service";
 
 const insertToDB: RequestHandler = catchAsyncError(async (req, res) => {
   const result = await FacultyService.insertToDB(req.body);
@@ -71,10 +71,40 @@ const deleteFromDB: RequestHandler = catchAsyncError(async (req, res) => {
   });
 });
 
+const assignCourses: RequestHandler = catchAsyncError(async (req, res) => {
+  const facultyId = req.params.id;
+  const courses = req.body.faculties;
+
+  const result = await FacultyService.assignCourses(facultyId, courses);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Course faculty assigned successfully!",
+    data: result,
+  });
+});
+
+const removeCourses: RequestHandler = catchAsyncError(async (req, res) => {
+  const facultyId = req.params.id;
+  const courses = req.body.faculties;
+
+  const result = await FacultyService.removeCourses(facultyId, courses);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Course faculty removed successfully!",
+    data: result,
+  });
+});
+
 export const FacultyController = {
   insertToDB,
   getAllFromDB,
   getByIdFromDB,
   updateIntoDB,
   deleteFromDB,
+  assignCourses,
+  removeCourses,
 };
