@@ -46,6 +46,7 @@ model AcademicDepartment {
   academicFaculty   AcademicFaculty @relation(fields: [academicFacultyId], references: [id])
   students          Student[]
   faculties         Faculty[]
+  offeredCourses    OfferedCourse[]
 
   @@map("academic_departments")
 }
@@ -120,16 +121,16 @@ model Room {
 }
 
 model Course {
-  id        String   @id @default(uuid())
-  title     String   @db.VarChar(50)
-  code      String   @db.VarChar(50)
-  credits   Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id              String                 @id @default(uuid())
+  title           String                 @db.VarChar(50)
+  code            String                 @db.VarChar(50)
+  credits         Int                    @default(0)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
   preRequisite    CourseToPrerequisite[] @relation("CourseToPrerequisite")
   preRequisiteFor CourseToPrerequisite[] @relation("PrerequisiteToCourse")
   faculties       CourseFaculty[]
+  offeredCourses  OfferedCourse[]
 
   @@map("courses")
 }
@@ -165,8 +166,23 @@ model SemesterRegistration {
   updatedAt          DateTime                   @updatedAt
   academicSemesterId String
   academicSemester   AcademicSemester           @relation(fields: [academicSemesterId], references: [id])
+  offeredCourses     OfferedCourse[]
 
   @@map("semester_registrations")
+}
+
+model OfferedCourse {
+  id                     String               @id @default(uuid())
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  courseId               String
+  academicDepartmentId   String
+  semesterRegistrationId String
+  course                 Course               @relation(fields: [courseId], references: [id])
+  academicDepartment     AcademicDepartment   @relation(fields: [academicDepartmentId], references: [id])
+  semesterRegistration   SemesterRegistration @relation(fields: [semesterRegistrationId], references: [id])
+
+  @@map("offered_courses")
 }
 
 enum SemesterRegistrationStatus {
