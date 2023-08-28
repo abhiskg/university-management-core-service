@@ -1,18 +1,16 @@
-import type { Error } from "mongoose";
+import type { Prisma } from "@prisma/client";
 import type { IGenericErrorMessage } from "../interfaces/error.interface";
 import type { IGenericErrorResponse } from "../interfaces/response.interface";
 
 const handleValidationError = (
-  err: Error.ValidationError
+  error: Prisma.PrismaClientValidationError
 ): IGenericErrorResponse => {
-  const errorMessages: IGenericErrorMessage[] = Object.values(err.errors).map(
-    (el) => {
-      return {
-        path: el?.path,
-        message: el?.message,
-      };
-    }
-  );
+  const errorMessages: IGenericErrorMessage[] = [
+    {
+      path: "",
+      message: error.message,
+    },
+  ];
 
   return {
     statusCode: 400,

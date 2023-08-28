@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 /* eslint-disable no-unused-expressions */
+import { Prisma } from "@prisma/client";
 import type { ErrorRequestHandler } from "express";
 import config from "../../config";
 import ApiError from "../../errors/ApiError";
-import handleCastError from "../../errors/handleCastError";
-import handleDuplicateKeyError from "../../errors/handleDuplicateKeyError";
-import handleUnknownRecordError from "../../errors/handleUnknownRecordError";
+import handleClientError from "../../errors/handleClientError";
+import handleValidationError from "../../errors/handleValidationError";
 import handleZodError from "../../errors/handleZodError";
 import type { IGenericErrorMessage } from "../../interfaces/error.interface";
 import { errorLogger } from "../../shared/logger";
@@ -25,20 +25,14 @@ const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorMessages = simplifiedError.errorMessages;
-  } else if (error?.code === "P2025") {
-    const simplifiedError = handleUnknownRecordError(error);
+  } else if (error instanceof Prisma.PrismaClientValidationError) {
+    const simplifiedError = handleValidationError(error);
 
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorMessages = simplifiedError.errorMessages;
-  } else if (error.name === "CastError") {
-    const simplifiedError = handleCastError(error);
-
-    statusCode = simplifiedError.statusCode;
-    message = simplifiedError.message;
-    errorMessages = simplifiedError.errorMessages;
-  } else if (error.code === 11000) {
-    const simplifiedError = handleDuplicateKeyError(error);
+  } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    const simplifiedError = handleClientError(error);
 
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
