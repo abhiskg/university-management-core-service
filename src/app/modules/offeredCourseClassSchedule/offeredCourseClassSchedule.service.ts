@@ -2,7 +2,11 @@ import type { OfferedCourseClassSchedule, Prisma } from "@prisma/client";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
 import type { IPaginationOptions } from "../../../interfaces/pagination.interface";
 import { prisma } from "../../../server";
-import { offeredCourseClassScheduleSearchableFields } from "./offeredCourseClassSchedule.constant";
+import {
+  offeredCourseClassScheduleRelationalFields,
+  offeredCourseClassScheduleRelationalFieldsMapper,
+  offeredCourseClassScheduleSearchableFields,
+} from "./offeredCourseClassSchedule.constant";
 import type { IOfferedCourseClassScheduleFilters } from "./offeredCourseClassSchedule.interface";
 import { OfferedCourseClassScheduleUtils } from "./offeredCourseClassSchedule.utils";
 
@@ -50,12 +54,20 @@ const getAllFromDB = async (
 
   if (Object.keys(filtersData).length > 0) {
     andConditions.push({
-      AND: Object.entries(filtersData).map(([field, value]) => {
-        return {
-          [field]: {
-            equals: value,
-          },
-        };
+      AND: Object.entries(filtersData).map(([key, value]) => {
+        if (offeredCourseClassScheduleRelationalFields.includes(key)) {
+          return {
+            [offeredCourseClassScheduleRelationalFieldsMapper[key]]: {
+              id: value,
+            },
+          };
+        } else {
+          return {
+            [key]: {
+              equals: value,
+            },
+          };
+        }
       }),
     });
   }
@@ -68,6 +80,12 @@ const getAllFromDB = async (
     skip,
     take: limit,
     orderBy: sortCondition,
+    include: {
+      faculty: true,
+      offeredCourseSection: true,
+      room: true,
+      semesterRegistration: true,
+    },
   });
   const total = await prisma.offeredCourseClassSchedule.count();
   return {
