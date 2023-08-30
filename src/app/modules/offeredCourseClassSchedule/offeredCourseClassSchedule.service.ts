@@ -1,40 +1,13 @@
 import type { OfferedCourseClassSchedule, Prisma } from "@prisma/client";
-import ApiError from "../../../errors/ApiError";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
 import type { IPaginationOptions } from "../../../interfaces/pagination.interface";
 import { prisma } from "../../../server";
-import { hasTimeConflict } from "../../../shared/utils";
 import { offeredCourseClassScheduleSearchableFields } from "./offeredCourseClassSchedule.constant";
 import type { IOfferedCourseClassScheduleFilters } from "./offeredCourseClassSchedule.interface";
+import { OfferedCourseClassScheduleUtils } from "./offeredCourseClassSchedule.utils";
 
 const insertToDB = async (data: OfferedCourseClassSchedule) => {
-  const alreadyBookedRoomOnDay =
-    await prisma.offeredCourseClassSchedule.findMany({
-      where: {
-        dayOfWeek: data.dayOfWeek,
-        room: {
-          id: data.roomId,
-        },
-      },
-    });
-
-  if (alreadyBookedRoomOnDay.length > 0) {
-    const existingSlots = alreadyBookedRoomOnDay.map((schedule) => ({
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
-      dayOfWeek: schedule.dayOfWeek,
-    }));
-
-    const newSlot = {
-      startTime: data.startTime,
-      endTime: data.endTime,
-      dayOfWeek: data.dayOfWeek,
-    };
-
-    if (hasTimeConflict(existingSlots, newSlot)) {
-      throw new ApiError(404, "Room is already booked");
-    }
-  }
+  await OfferedCourseClassScheduleUtils.checkRoomAvailable(data);
 
   const result = await prisma.offeredCourseClassSchedule.create({
     data,
