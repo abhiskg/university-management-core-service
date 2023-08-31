@@ -24,3 +24,13 @@ export const offeredCourseClassScheduleRelationalFieldsMapper: Record<
   facultyId: "faculty",
   semesterRegistrationId: "semesterRegistration",
 };
+
+export const daysInWeek = [
+  "SATURDAY",
+  "SUNDAY",
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+] as const;

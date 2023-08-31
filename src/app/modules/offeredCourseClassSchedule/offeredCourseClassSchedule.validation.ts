@@ -1,23 +1,51 @@
 import { z } from "zod";
+import { daysInWeek } from "./offeredCourseClassSchedule.constant";
 
-const createSchema = z.object({
-  body: z.object({
-    offeredCourseId: z.string({
-      required_error: "Offered course id is required",
+const timeStringSchema = z.string().refine(
+  (time) => {
+    const regex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    // example: 09:45, 21:30
+    return regex.test(time);
+  },
+  {
+    message: "Invalid time format, expected 'HH:MM' in 24-hour format",
+  }
+);
+
+const createSchema = z
+  .object({
+    body: z.object({
+      dayOfWeek: z.enum(daysInWeek),
+      startTime: timeStringSchema,
+      endTime: timeStringSchema,
+      roomId: z.string({
+        required_error: "Room id is required",
+      }),
+      facultyId: z.string({
+        required_error: "Faculty id is required",
+      }),
+      offeredCourseSectionId: z.string({
+        required_error: "Section id is required",
+      }),
     }),
-    maxCapacity: z.number({
-      required_error: "Max capacity is required",
-    }),
-    title: z.string({
-      required_error: "Title is required",
-    }),
-  }),
-});
+  })
+  .refine(
+    ({ body }) => {
+      const start = new Date(`1970-01-01T${body.startTime}:00`);
+      const end = new Date(`1970-01-01T${body.endTime}:00`);
+
+      return start < end;
+    },
+    {
+      message: "Start time must be before end time",
+    }
+  );
 
 const updateSchema = z.object({
   body: z.object({
-    maxCapacity: z.number().optional(),
-    title: z.string().optional(),
+    roomId: z.string().optional(),
+    facultyId: z.string().optional(),
+    offeredCourseSectionId: z.string().optional(),
   }),
 });
 

@@ -12,6 +12,7 @@ import { OfferedCourseClassScheduleUtils } from "./offeredCourseClassSchedule.ut
 
 const insertToDB = async (data: OfferedCourseClassSchedule) => {
   await OfferedCourseClassScheduleUtils.checkRoomAvailable(data);
+  await OfferedCourseClassScheduleUtils.checkFacultyAvailable(data);
 
   const result = await prisma.offeredCourseClassSchedule.create({
     data,
