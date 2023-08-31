@@ -79,10 +79,28 @@ const deleteFromDB: RequestHandler = catchAsyncError(async (req, res) => {
   });
 });
 
+const startMyRegistration: RequestHandler = catchAsyncError(
+  async (req, res) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = (req as any).user;
+    const result = await SemesterRegistrationService.startMyRegistration(
+      user.userId
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "SemesterRegistration deleted successfully!",
+      data: result,
+    });
+  }
+);
+
 export const SemesterRegistrationController = {
   insertToDB,
   getAllFromDB,
   getByIdFromDB,
   updateIntoDB,
   deleteFromDB,
+  startMyRegistration,
 };

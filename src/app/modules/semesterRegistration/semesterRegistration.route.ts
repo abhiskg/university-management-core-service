@@ -30,4 +30,10 @@ router.delete(
   SemesterRegistrationController.deleteFromDB
 );
 
+router.post(
+  "/start-registration",
+  auth(ENUM_USER_ROLE.STUDENT),
+  SemesterRegistrationController.startMyRegistration
+);
+
 export const SemesterRegistrationRoutes = router;
