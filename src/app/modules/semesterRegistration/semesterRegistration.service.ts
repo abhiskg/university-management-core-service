@@ -2,6 +2,7 @@ import {
   SemesterRegistrationStatus,
   type Prisma,
   type SemesterRegistration,
+  type StudentSemesterRegistrationCourse,
 } from "@prisma/client";
 import ApiError from "../../../errors/ApiError";
 import { PaginationHelper } from "../../../helpers/pagination.helper";
@@ -218,6 +219,45 @@ const startMyRegistration = async (authUserId: string) => {
   };
 };
 
+const enrollIntoCourse = async (
+  authUserId: string,
+  payload: Pick<
+    StudentSemesterRegistrationCourse,
+    "offeredCourseId" | "offeredCourseSectionId"
+  >
+) => {
+  const student = await prisma.student.findFirst({
+    where: {
+      studentId: authUserId,
+    },
+  });
+
+  if (!student) {
+    throw new ApiError(400, "Student  Not Found");
+  }
+
+  const semesterRegistration = await prisma.semesterRegistration.findFirst({
+    where: {
+      status: SemesterRegistrationStatus.ONGOING,
+    },
+  });
+
+  if (!semesterRegistration) {
+    throw new ApiError(400, "Semester Registration Not Found");
+  }
+
+  const enrollCourse = await prisma.studentSemesterRegistrationCourse.create({
+    data: {
+      studentId: student.id,
+      semesterRegistrationId: semesterRegistration.id,
+      offeredCourseId: payload.offeredCourseId,
+      offeredCourseSectionId: payload.offeredCourseSectionId,
+    },
+  });
+
+  return enrollCourse;
+};
+
 export const SemesterRegistrationService = {
   insertToDB,
   getAllFromDB,
@@ -225,4 +265,5 @@ export const SemesterRegistrationService = {
   updateIntoDB,
   deleteFromDB,
   startMyRegistration,
+  enrollIntoCourse,
 };
