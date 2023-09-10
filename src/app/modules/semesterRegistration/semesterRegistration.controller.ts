@@ -107,7 +107,23 @@ const enrollIntoCourse: RequestHandler = catchAsyncError(async (req, res) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "SemesterRegistration course enrolled successfully!",
+    message: "Student course enrolled successfully!",
+    data: result,
+  });
+});
+
+const withdrawFromCourse: RequestHandler = catchAsyncError(async (req, res) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (req as any).user;
+  const result = await SemesterRegistrationService.withdrawFromCourse(
+    user.userId,
+    req.body
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Student withdraw from course successfully!",
     data: result,
   });
 });
@@ -120,4 +136,5 @@ export const SemesterRegistrationController = {
   deleteFromDB,
   startMyRegistration,
   enrollIntoCourse,
+  withdrawFromCourse,
 };
