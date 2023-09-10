@@ -233,7 +233,7 @@ const enrollIntoCourse = async (
   });
 
   if (!student) {
-    throw new ApiError(400, "Student  Not Found");
+    throw new ApiError(404, "Student  Not Found");
   }
 
   const semesterRegistration = await prisma.semesterRegistration.findFirst({
@@ -243,19 +243,82 @@ const enrollIntoCourse = async (
   });
 
   if (!semesterRegistration) {
-    throw new ApiError(400, "Semester Registration Not Found");
+    throw new ApiError(404, "Semester Registration Not Found");
   }
 
-  const enrollCourse = await prisma.studentSemesterRegistrationCourse.create({
-    data: {
-      studentId: student.id,
-      semesterRegistrationId: semesterRegistration.id,
-      offeredCourseId: payload.offeredCourseId,
-      offeredCourseSectionId: payload.offeredCourseSectionId,
+  const offeredCourse = await prisma.offeredCourse.findFirst({
+    where: {
+      id: payload.offeredCourseId,
+    },
+    include: {
+      course: true,
     },
   });
 
-  return enrollCourse;
+  if (!offeredCourse) {
+    throw new ApiError(404, "Offered Course Not Found");
+  }
+
+  const offeredCourseSection = await prisma.offeredCourseSection.findFirst({
+    where: {
+      id: payload.offeredCourseSectionId,
+    },
+  });
+
+  if (!offeredCourseSection) {
+    throw new ApiError(404, "Offered Course Section Not Found");
+  }
+
+  if (
+    offeredCourseSection.maxCapacity &&
+    offeredCourseSection.currentlyEnrolledStudent &&
+    offeredCourseSection.currentlyEnrolledStudent >=
+      offeredCourseSection.maxCapacity
+  ) {
+    throw new ApiError(400, "Student capacity is full");
+  }
+
+  await prisma.$transaction(async (tsx) => {
+    await tsx.studentSemesterRegistrationCourse.create({
+      data: {
+        studentId: student.id,
+        semesterRegistrationId: semesterRegistration.id,
+        offeredCourseId: payload.offeredCourseId,
+        offeredCourseSectionId: payload.offeredCourseSectionId,
+      },
+    });
+
+    await tsx.offeredCourseSection.update({
+      where: {
+        id: payload.offeredCourseSectionId,
+      },
+      data: {
+        currentlyEnrolledStudent: {
+          increment: 1,
+        },
+      },
+    });
+
+    await tsx.studentSemesterRegistration.updateMany({
+      where: {
+        student: {
+          id: student.id,
+        },
+        semesterRegistration: {
+          id: semesterRegistration.id,
+        },
+      },
+      data: {
+        totalCreditsTaken: {
+          increment: offeredCourse.course.credits,
+        },
+      },
+    });
+  });
+
+  return {
+    message: "Successfully enrolled into course",
+  };
 };
 
 export const SemesterRegistrationService = {
