@@ -38,12 +38,14 @@ router.post(
 
 router.post(
   "/enroll-into-course",
+  validateRequest(SemesterRegistrationValidation.enrollOrWithdrawCourseSchema),
   auth(ENUM_USER_ROLE.STUDENT),
   SemesterRegistrationController.enrollIntoCourse
 );
 
 router.post(
   "/withdraw-from-course",
+  validateRequest(SemesterRegistrationValidation.enrollOrWithdrawCourseSchema),
   auth(ENUM_USER_ROLE.STUDENT),
   SemesterRegistrationController.withdrawFromCourse
 );
